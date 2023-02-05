@@ -1,0 +1,63 @@
+---
+ - name: Wordpress installeren
+   hosts: all
+   become: true
+   vars_files:
+    - password.yml
+    
+    tasks:
+     - name: update
+       apt:
+        updgrade=dist
+        force_apt_get=yes
+        
+     - name: install lamp
+       apt:
+         name:
+           - apache2
+           - mysql_server
+           - libapache2-mod-php
+           - php-mysql
+           - php
+      
+      - name: install wordpress
+        get_url:
+          url: https://wordpress.org/latest/tar.gz
+          dest: /var/www/html
+          mode: 0644
+          
+      - name: extract tar.gz
+        command: tar -xzvf /var/www/html/wordpress-6.1.1.tar.gz -C /var/www/hmtl
+        
+      - name: create database
+        mysql_db:
+          name: wp-database
+          state: present
+          login_user: root
+          login_unix_socket: /var/run/mysqld/mysqld.sock
+        
+      - name: create mysql user
+        mysql_user:
+          name: wp-admin
+          password: "{{ mysql_password }}"
+          priv: "wp-database.*:ALL"
+          state: present
+          login_user: root
+          login_unix_socket: /var/run/mysqld/mysqld.sock
+          
+       - name: wp-config-sample.php
+         copy:
+           src: /var/www/html/wordpress/wp-config-sample.php
+           dest: /var/www/html/wordpress/wp-config.php
+           remote_src: yes
+           
+      handlers:
+        - name: Apache2 reloaded
+          service:
+            name: apache2
+            state: reloaded
+         
+        - name: Apache2 restarted
+          service:
+            name: apache2
+            state: restarted
