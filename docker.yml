@@ -1,0 +1,27 @@
+---
+- name: docker install
+  become: true
+  hosts: all
+  
+  tasks:
+    - name: update_ubuntu
+      apt:
+        update_cache: yes
+    
+    - name: install docker
+      apt:
+        name: docker.io
+        name: docker-compose
+        state: present
+        
+     - name: start docker container
+       service:
+         name: docker
+         state: started
+         enabled: yes
+      
+      - name: run docker container
+        docker_container:
+          name: testcontainer_435443
+          image: alpine
+          state: started
