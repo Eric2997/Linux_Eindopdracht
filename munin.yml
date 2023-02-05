@@ -1,0 +1,30 @@
+---
+- name: monitor-munin
+  hosts: all
+  become: true
+  tasks:
+  
+    - name: update
+      apt:
+      upgrade=dist
+      force_apt_get=yes
+      
+    - name: Install munin-node
+      apt:
+        name: munin-node
+        state: latest
+        update_cache: true
+    
+    - name: Allow monitor IP
+      lineinfile: >
+        dest=/etc/munin/munin-node.conf
+        regexp="{{ item.regexp }}"
+        line="{{ item.line }}"
+      with_items:
+      - { regexp: 'allow ^::1$', line: 'allow ^10\.0\.0\.44$' }
+     
+     - name: restart munin
+       ansible.builtin.service:
+         name: munin-node
+         state: restarted
+         enabled: true
